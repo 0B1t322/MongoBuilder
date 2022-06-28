@@ -19,8 +19,12 @@ const (
 	ELEM_MATCH = "$elemMatch"
 )
 
-type Filter interface {
+type ToBSON interface {
 	BSON() bson.M
+}
+
+type Filter interface {
+	ToBSON
 
 	// return {"$or": [{...},...,{...}]}
 	Or(filters ...Filter) Filter
