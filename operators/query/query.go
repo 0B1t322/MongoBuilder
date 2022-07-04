@@ -1,8 +1,7 @@
 package query
 
 import (
-	"strings"
-
+	"github.com/0B1t322/MongoBuilder/operators/options"
 	"github.com/0B1t322/MongoBuilder/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
@@ -161,49 +160,15 @@ func Mod(field string, divisor, remainder float64) bson.M {
 	return bson.M{field: bson.M{"$mod": bson.A{divisor, remainder}}}
 }
 
-type regexOptions int
 
-const (
-	I regexOptions = 1<<iota
-	M
-	X
-	S
-)
-
-func (opt regexOptions) buildRegexOption() string {
-	options := strings.Builder{}
-	{
-		if opt & I == I {
-			options.WriteString("i")
-		}
-		if opt & M == M {
-			options.WriteString("m")
-		}
-		if opt & X == X {
-			options.WriteString("x")
-		}
-		if opt & S == S {
-			options.WriteString("s")
-		}
-	}
-	return options.String()
-}
-
-func mergeRegexOptions(opts ...regexOptions) regexOptions {
-	var opt regexOptions
-	for _, o := range opts {
-		opt = opt | o
-	}
-	return opt
-}
 
 // return if given options { <field>: { $regex: 'pattern', $options: '<options>' } }
 // if not return { <field>: { $regex: 'pattern' } }
-func Regex(field string, pattern string, options ...regexOptions) bson.M {
+func Regex(field string, pattern string, opts ...options.RegexOptions) bson.M {
 	regexBson := bson.M{}
 	{
 		regexBson["$regex"] = pattern
-		if builded := mergeRegexOptions(options...).buildRegexOption(); builded != "" {
+		if builded := options.MergeRegexOptions(opts...).BuildRegexOption(); builded != "" {
 			regexBson["$options"] = builded
 		}
 	}

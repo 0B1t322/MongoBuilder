@@ -1,6 +1,11 @@
 package aggregation
 
-import "go.mongodb.org/mongo-driver/bson"
+import (
+	"github.com/0B1t322/MongoBuilder/operators/options"
+	"github.com/0B1t322/MongoBuilder/operators/types"
+	"github.com/0B1t322/MongoBuilder/utils"
+	"go.mongodb.org/mongo-driver/bson"
+)
 
 // if cond is true return defaultValue
 func condDefaultOrValue(value interface{}, cond bool, defaultValye interface{}) interface{} {
@@ -814,5 +819,411 @@ func Switch(
 ) bson.M {
 	return bson.M{
 		"$switch": arg.formatSwitchArg(),
+	}
+}
+
+// TODO Date Expression Operators
+
+func ToDate(
+	expression interface{},
+) bson.M {
+	return bson.M{
+		"$toDate": expression,
+	}
+}
+
+func Literal(
+	value interface{},
+) bson.M {
+	return bson.M{
+		"$literal": value,
+	}
+}
+
+func MergeObjects(
+	docs ...interface{},
+) bson.M {
+	return bson.M{
+		"$mergeObjects": condDefaultOrValue(bson.A(docs), len(docs) == 1, docs[0]),
+	}
+}
+
+func SetField(
+	field string,
+	input interface{},
+	value interface{},
+) bson.M {
+	return bson.M{
+		"$setField": bson.M{
+			"field": field,
+			"input": input,
+			"value": value,
+		},
+	}
+}
+
+func AllElementsTrue(
+	expression interface{},
+) bson.M {
+	return bson.M{
+		"$allElementsTrue": bson.A{expression},
+	}
+}
+
+func AnyElemetsTrue(
+	expression interface{},
+) bson.M {
+	return bson.M{
+		"$anyElementTrue": bson.A{expression},
+	}
+}
+
+func SetDifference(
+	left,
+	right interface{},
+) bson.M {
+	return bson.M{
+		"$setDifference": bson.A{left, right},
+	}
+}
+
+func SetEquals(
+	expressions ...interface{},
+) bson.M {
+	return bson.M{
+		"$setEquals": bson.A(expressions),
+	}
+}
+
+func SetIntersection(
+	arrays ...interface{},
+) bson.M {
+	return bson.M{
+		"$setIntersection": bson.A(arrays),
+	}
+}
+
+func SetIsSubset(
+	left,
+	right interface{},
+) bson.M {
+	return bson.M{
+		"$setIsSubset": bson.A{left, right},
+	}
+}
+
+func SetUnion(
+	expressions ...interface{},
+) bson.M {
+	return bson.M{
+		"$setUnion": bson.A(expressions),
+	}
+}
+
+func Concat(
+	expressions ...interface{},
+) bson.M {
+	return bson.M{
+		"$concat": bson.A(expressions),
+	}
+}
+
+func trimBody(
+	input interface{},
+	chars interface{},
+) bson.M {
+	b := bson.M{
+		"input": input,
+	}
+	if chars != nil {
+		b["chars"] = chars
+	}
+	return b
+}
+
+func LTrimChars(
+	input interface{},
+	chars interface{},
+) bson.M {
+	return bson.M{
+		"$ltrim": trimBody(input, chars),
+	}
+}
+
+func LTrim(
+	input interface{},
+) bson.M {
+	return LTrimChars(input, nil)
+}
+
+func regexBody(
+	input,
+	regex interface{},
+	opts ...options.RegexOptions,
+) bson.M {
+	b := bson.M{
+		"input": input,
+		"regex": regex,
+	}
+
+	if options := options.MergeRegexOptions(opts...).BuildRegexOption(); options != "" {
+		b["options"] = options
+	}
+	return b
+}
+
+func RegexFind(
+	input,
+	regex interface{},
+	opts ...options.RegexOptions,
+) bson.M {
+	return bson.M{
+		"$regexFind": regexBody(input, regex, opts...),
+	}
+}
+
+func RegexFindAll(
+	input,
+	regex interface{},
+	opts ...options.RegexOptions,
+) bson.M {
+	return bson.M{
+		"$regexFindAll": regexBody(input, regex, opts...),
+	}
+}
+
+func RegexMatch(
+	input,
+	regex interface{},
+	opts ...options.RegexOptions,
+) bson.M {
+	return bson.M{
+		"$regexMatch": regexBody(input, regex, opts...),
+	}
+}
+
+func replace(
+	op string,
+	input,
+	find,
+	replacement interface{},
+) bson.M {
+	return bson.M{
+		op: bson.M{
+			"input":       input,
+			"find":        find,
+			"replacement": replacement,
+		},
+	}
+}
+
+func ReplaceOne(
+	input,
+	find,
+	replacement interface{},
+) bson.M {
+	return replace("$replaceOne", input, find, replacement)
+}
+
+func ReplaceAll(
+	input,
+	find,
+	replacement interface{},
+) bson.M {
+	return replace("$replaceAll", input, find, replacement)
+}
+
+func RTtrim(
+	input interface{},
+) bson.M {
+	return RTrimChars(input, nil)
+}
+
+func RTrimChars(
+	input interface{},
+	chars interface{},
+) bson.M {
+	return bson.M{
+		"$rtrim": trimBody(input, chars),
+	}
+}
+
+func Split(
+	input,
+	delimeter interface{},
+) bson.M {
+	return bson.M{
+		"$split": bson.M{
+			"input":     input,
+			"delimeter": delimeter,
+		},
+	}
+}
+
+func StrLenBytes(
+	input interface{},
+) bson.M {
+	return bson.M{
+		"$strLenBytes": input,
+	}
+}
+
+func StrLenCP(
+	input interface{},
+) bson.M {
+	return bson.M{
+		"$strLenCP": input,
+	}
+}
+
+func StrCaseCMP(
+	stringExpression,
+	caseExpression interface{},
+) bson.M {
+	return bson.M{
+		"$strcasecmp": bson.A{stringExpression, caseExpression},
+	}
+}
+
+func SubStrBytes(
+	stringExpression,
+	byteIndex,
+	byteCount interface{},
+) bson.M {
+	return bson.M{
+		"$substrBytes": bson.A{stringExpression, byteIndex, byteCount},
+	}
+}
+
+func ToLower(
+	expression interface{},
+) bson.M {
+	return bson.M{
+		"$toLower": expression,
+	}
+}
+
+func ToString(
+	expression interface{},
+) bson.M {
+	return bson.M{
+		"$toString": expression,
+	}
+}
+
+func Trim(
+	input interface{},
+) bson.M {
+	return TrimChars(input, nil)
+}
+
+func TrimChars(
+	input interface{},
+	chars interface{},
+) bson.M {
+	return bson.M{
+		"$trim": trimBody(input, chars),
+	}
+}
+
+func ToUpper(
+	expression interface{},
+) bson.M {
+	return bson.M{
+		"$toUpper": expression,
+	}
+}
+
+type ConvertOptionalsArger interface {
+	convertOptionals()
+	OnNull(interface{}) ConvertOptionalsArger
+	OnError(interface{}) ConvertOptionalsArger
+}
+
+type convertOptionals struct {
+	onError interface{}
+	onNull  interface{}
+}
+
+func (convertOptionals) convertOptionals() {}
+
+func (c convertOptionals) Merge(opts ...ConvertOptionalsArger) convertOptionals {
+	for _, opt := range opts {
+		c.onNull = opt.OnNull(c.onNull)
+		c.onError = opt.OnError(c.onError)
+	}
+	return c
+}
+
+func (c convertOptionals) OnNull(v interface{}) ConvertOptionalsArger {
+	c.onNull = v
+	return c
+}
+
+func (c convertOptionals) OnError(v interface{}) ConvertOptionalsArger {
+	c.onError = v
+	return c
+}
+
+func ConvertOptionalsArgs() ConvertOptionalsArger {
+	return convertOptionals{}
+}
+
+func Convert(
+	input interface{},
+	to types.Type,
+	opts ...ConvertOptionalsArger,
+) bson.M {
+	optionals := bson.M{}
+	{
+		opt := convertOptionals{}.Merge(opts...)
+		if opt.onNull != nil {
+			optionals["onNull"] = opt.onNull
+		}
+		if opt.onError != nil {
+			optionals["onError"] = opt.onError
+		}
+	}
+
+	return bson.M{
+		"$convert": utils.MergeBsonM(
+			bson.M{
+				"input": input,
+				"to":    to.StringIdentifier(),
+			},
+			optionals,
+		),
+	}
+}
+
+func AddToSet(expression interface{}) bson.M {
+	return bson.M{
+		"$addToSet": expression,
+	}
+}
+
+func Avg(
+	expressions ...interface{},
+) bson.M {
+	return bson.M{
+		"$avg": condDefaultOrValue(bson.A(expressions), len(expressions) == 1, expressions[0]),
+	}
+}
+
+func Count() bson.M {
+	return bson.M{
+		"$count": bson.M{},
+	}
+}
+
+func Push(expression interface{}) bson.M {
+	return bson.M{
+		"$push": expression,
+	}
+}
+
+func Sum(expressions ...interface{}) bson.M {
+	return bson.M{
+		"$sum": condDefaultOrValue(bson.A(expressions), len(expressions) == 1, expressions[0]),
 	}
 }
