@@ -1227,3 +1227,9 @@ func Sum(expressions ...interface{}) bson.M {
 		"$sum": condDefaultOrValue(bson.A(expressions), len(expressions) == 1, expressions[0]),
 	}
 }
+
+func Multiply(expressions ...interface{}) bson.M {
+	return bson.M{
+		"$multiply": bson.A(expressions),
+	}
+}
