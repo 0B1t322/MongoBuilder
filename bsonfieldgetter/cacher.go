@@ -5,12 +5,13 @@ import (
 )
 
 var casher Casher
-
-func init() {
-	casher = NewBsonFieldsCacher()
-}
+var once sync.Once
 
 func GetCasher() Casher {
+	once.Do(func() {
+		casher = NewBsonFieldsCacher()
+	})
+
 	return casher
 }
 
@@ -25,7 +26,7 @@ type BsonFieldsCacher struct {
 
 func NewBsonFieldsCacher() *BsonFieldsCacher {
 	return &BsonFieldsCacher{
-		cache: make(map[interface{}]*BsonFieldGetter),
+		cache:   make(map[interface{}]*BsonFieldGetter),
 		RWMutex: sync.RWMutex{},
 	}
 }
