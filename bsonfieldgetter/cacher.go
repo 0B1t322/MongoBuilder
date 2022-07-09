@@ -4,7 +4,11 @@ import (
 	"sync"
 )
 
-var casher = NewBsonFieldsCacher()
+var casher Casher
+
+func init() {
+	casher = NewBsonFieldsCacher()
+}
 
 func GetCasher() Casher {
 	return casher
