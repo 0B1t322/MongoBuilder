@@ -7,6 +7,8 @@ import (
 
 type BsonFieldGetter struct {
 	structFieldToBsonField map[string]string
+	// in key field represent name in value nil value
+	subTypes map[string]interface{}
 }
 
 func NewBsonFieldGetter(
@@ -14,6 +16,7 @@ func NewBsonFieldGetter(
 ) *BsonFieldGetter {
 	b := &BsonFieldGetter{
 		structFieldToBsonField: make(map[string]string),
+		subTypes:               make(map[string]interface{}),
 	}
 	b.init(model)
 	return b
@@ -28,7 +31,7 @@ func (b *BsonFieldGetter) init(model interface{}) {
 
 	if t.Kind() == reflect.Slice {
 		t = t.Elem()
-		if t.Kind() == reflect.Ptr  {
+		if t.Kind() == reflect.Ptr {
 			t = t.Elem()
 		}
 	}
@@ -56,13 +59,13 @@ func (b *BsonFieldGetter) initType(t reflect.Type) {
 func (b *BsonFieldGetter) initField(parentField string, field reflect.StructField) {
 	t := field.Type
 
-	if t.Kind() == reflect.Ptr  {
+	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
 
 	if t.Kind() == reflect.Slice {
 		t = t.Elem()
-		if t.Kind() == reflect.Ptr  {
+		if t.Kind() == reflect.Ptr {
 			t = t.Elem()
 		}
 	}
@@ -73,13 +76,12 @@ func (b *BsonFieldGetter) initField(parentField string, field reflect.StructFiel
 		return
 	}
 
-	if strings.Contains(tag, ",inline") {
-		if t.Kind() != reflect.Struct {
-			return
-		}
+	if strings.Contains(tag, ",inline") && t.Kind() == reflect.Struct {
 		b.initTypeWithParentField(parentField, t)
 		return
 	}
+
+	tag = strings.Split(tag, ",")[0]
 
 	if parentField == "" {
 		b.structFieldToBsonField[field.Name] = tag
@@ -88,18 +90,39 @@ func (b *BsonFieldGetter) initField(parentField string, field reflect.StructFiel
 	}
 
 	if t.Kind() == reflect.Struct {
+		in := reflect.New(t).Interface()
 		if parentField == "" {
-			b.initTypeWithParentField(field.Name, t)
+			b.subTypes[field.Name] = in
 		} else {
-			b.initTypeWithParentField(parentField+"."+field.Name, t)
+			b.subTypes[parentField+"."+field.Name] = in
 		}
+		return
 	}
 }
 
-func (b BsonFieldGetter) GetMap() map[string]string {
-	return b.structFieldToBsonField
-}
+// TODO: Refactor recursive types
+// func (b BsonFieldGetter) GetMap() map[string]string {
+// 	newMap := make(map[string]string)
+// 	{
+// 		for k, v := range b.structFieldToBsonField {
+// 			newMap[k] = v
+// 		}
+
+// 		for subTypeField, subType := range b.subTypes {
+// 			for k, v := range getCasher().Get(subType).GetMap() {
+// 				newMap[subTypeField+"."+k] = b.structFieldToBsonField[subTypeField] + "." + v
+// 			}
+// 		}
+// 	}
+// 	return newMap
+// }
 
 func (b *BsonFieldGetter) Get(field string) string {
+	splited := strings.SplitN(field, ".", 2)
+	if len(splited) > 1 {
+		if subType, ok := b.subTypes[splited[0]]; ok {
+			return b.structFieldToBsonField[splited[0]] + "." + getCasher().Get(subType).Get(splited[1])
+		}
+	}
 	return b.structFieldToBsonField[field]
 }

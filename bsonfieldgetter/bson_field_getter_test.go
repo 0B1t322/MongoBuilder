@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFunc_Func(t *testing.T) {
+func TestFunc_Tags(t *testing.T) {
 	b := bsonfieldgetter.NewBsonFieldGetter(
 		[]struct {
 			Name       string `bson:"name"`
@@ -39,27 +39,119 @@ func TestFunc_Func(t *testing.T) {
 
 			SliceOfPtrField []*struct {
 				Name string `bson:"name"`
-			} `bson:"sliceOfPtrField"`
+			} `bson:"sliceOfPtrField,omitempty"`
 		}{},
 	)
 
 	require.Equal(
 		t,
-		map[string]string{
-			"Name":            "name",
-			"Age":             "age",
-			"Nested":          "nested",
-			"Some":            "some",
-			"Nested.Name":     "nested.name",
-			"Nested.Time":     "nested.time",
-			"Nested.Obj":      "nested.obj",
-			"Nested.Obj.Name": "nested.obj.name",
-			"Nested.Obj.Some": "nested.obj.some",
-			"SliceField":      "sliceField",
-			"SliceField.Name": "sliceField.name",
-			"SliceOfPtrField": "sliceOfPtrField",
-			"SliceOfPtrField.Name": "sliceOfPtrField.name",
-		},
-		b.GetMap(),
+		"name",
+		b.Get("Name"),
+	)
+
+	require.Equal(
+		t,
+		"age",
+		b.Get("Age"),
+	)
+
+	require.Equal(
+		t,
+		"nested",
+		b.Get("Nested"),
+	)
+
+	require.Equal(
+		t,
+		"some",
+		b.Get("Some"),
+	)
+
+	require.Equal(
+		t,
+		"nested.name",
+		b.Get("Nested.Name"),
+	)
+
+	require.Equal(
+		t,
+		"nested.time",
+		b.Get("Nested.Time"),
+	)
+
+	require.Equal(
+		t,
+		"nested.obj",
+		b.Get("Nested.Obj"),
+	)
+
+	require.Equal(
+		t,
+		"nested.obj.name",
+		b.Get("Nested.Obj.Name"),
+	)
+
+	require.Equal(
+		t,
+		"nested.obj.some",
+		b.Get("Nested.Obj.Some"),
+	)
+
+	require.Equal(
+		t,
+		"sliceField",
+		b.Get("SliceField"),
+	)
+
+	require.Equal(
+		t,
+		"sliceField.name",
+		b.Get("SliceField.Name"),
+	)
+
+	require.Equal(
+		t,
+		"sliceOfPtrField",
+		b.Get("SliceOfPtrField"),
+	)
+
+	require.Equal(
+		t,
+		"sliceOfPtrField.name",
+		b.Get("SliceOfPtrField.Name"),
+	)
+}
+
+type TypeF struct {
+	Name   string   `bson:"name"`
+	TypesS []*TypeS `bson:"typesS"`
+}
+
+type TypeS struct {
+	SName  string   `bson:"sname"`
+	TypesF []*TypeF `bson:"typesF"`
+}
+
+func TestFunc_RecursiveTypes(t *testing.T) {
+	b := bsonfieldgetter.NewBsonFieldGetter(TypeF{})
+	require.Equal(
+		t,
+		"typesS",
+		b.Get("TypesS"),
+	)
+	require.Equal(
+		t,
+		"typesS.sname",
+		b.Get("TypesS.SName"),
+	)
+	require.Equal(
+		t,
+		"typesS.typesF",
+		b.Get("TypesS.TypesF"),
+	)
+	require.Equal(
+		t,
+		"typesS.typesF.name",
+		b.Get("TypesS.TypesF.Name"),
 	)
 }

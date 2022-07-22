@@ -5,10 +5,18 @@ import (
 	"sync"
 )
 
-var casher Casher
+var casher *BsonFieldsCacher
 var once sync.Once
 
 func GetCasher() Casher {
+	once.Do(func() {
+		casher = NewBsonFieldsCacher()
+	})
+
+	return casher
+}
+
+func getCasher() *BsonFieldsCacher {
 	once.Do(func() {
 		casher = NewBsonFieldsCacher()
 	})
@@ -33,22 +41,7 @@ func NewBsonFieldsCacher() *BsonFieldsCacher {
 }
 
 func (c *BsonFieldsCacher) Get(model interface{}) *BsonFieldGetter {
-	var strType string
-	{
-		t := reflect.TypeOf(model)
-		if t.Kind() == reflect.Ptr {
-			t = t.Elem()
-		}
-
-		if t.Kind() == reflect.Slice || t.Kind() == reflect.Array {
-			t = t.Elem()
-			if t.Kind() == reflect.Ptr {
-				t = t.Elem()
-			}
-		}
-
-		strType = t.String()
-	}
+	strType := getTypeName(model)
 	c.RLock()
 	if bg, ok := c.cache[strType]; ok {
 		c.RUnlock()
@@ -63,6 +56,40 @@ func (c *BsonFieldsCacher) Get(model interface{}) *BsonFieldGetter {
 	bg := NewBsonFieldGetter(model)
 	c.cache[strType] = bg
 	return bg
+}
+
+func (c *BsonFieldsCacher) set(model interface{}, bg *BsonFieldGetter) {
+	strType := getTypeName(model)
+
+	c.cache[strType] = bg
+}
+
+func (c *BsonFieldsCacher) get(model interface{}) *BsonFieldGetter {
+	strType := getTypeName(model)
+	if bg, ok := c.cache[strType]; ok {
+		return bg
+	}
+	bg := NewBsonFieldGetter(model)
+	c.cache[strType] = bg
+	return bg
+}
+
+func (c *BsonFieldsCacher) createIfNotExist(model interface{}) *BsonFieldGetter {
+	strType := getTypeName(model)
+	bg := c.getByTypeName(strType)
+	if bg != nil {
+		return bg
+	}
+	bg = NewBsonFieldGetter(model)
+	c.cache[strType] = bg
+	return bg
+}
+
+func (c *BsonFieldsCacher) getByTypeName(typeName string) *BsonFieldGetter {
+	if bg, ok := c.cache[typeName]; ok {
+		return bg
+	}
+	return nil
 }
 
 func getTypeName(of interface{}) string {
