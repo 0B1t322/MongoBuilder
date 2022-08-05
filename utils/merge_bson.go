@@ -3,6 +3,10 @@ package utils
 import "go.mongodb.org/mongo-driver/bson"
 
 func MergeBsonM(ms ...bson.M) bson.M {
+	if len(ms) == 0 {
+		return bson.M{}
+	}
+	
 	out := bson.M{}
 	{
 		if len(ms) > 1 {

@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func TestFunc_Func(t *testing.T) {
+func TestFunc_MergeBson(t *testing.T) {
 	require.Equal(
 		t,
 		bson.M{
@@ -68,5 +68,11 @@ func TestFunc_Func(t *testing.T) {
 				),
 			},
 		},
+	)
+
+	require.Equal(
+		t,
+		bson.M{},
+		utils.MergeBsonM(),
 	)
 }

@@ -181,6 +181,19 @@ func TestFunc_Update(t *testing.T) {
 	)
 
 	t.Run(
+		"Empty Set",
+		func(t *testing.T) {
+			require.Equal(
+				t,
+				bson.M{
+					"$set": bson.M{},
+				},
+				update.Set(),
+			)
+		},
+	)
+
+	t.Run(
 		"Unset",
 		func(t *testing.T) {
 			require.Equal(
