@@ -1095,6 +1095,16 @@ func SubStrBytes(
 	}
 }
 
+func SubStrCP(
+	stringExpression,
+	codepointIndex,
+	codepointCount interface{},
+) bson.M {
+	return bson.M{
+		"$substrCP": bson.A{stringExpression, codepointIndex, codepointCount},
+	}
+}
+
 func ToLower(
 	expression interface{},
 ) bson.M {
