@@ -1053,9 +1053,9 @@ func Split(
 	delimeter interface{},
 ) bson.M {
 	return bson.M{
-		"$split": bson.M{
-			"input":     input,
-			"delimeter": delimeter,
+		"$split": bson.A{
+			input,
+			delimeter,
 		},
 	}
 }
